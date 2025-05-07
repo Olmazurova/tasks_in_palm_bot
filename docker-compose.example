@@ -1,0 +1,57 @@
+services:
+
+  redis:
+    image: redis:latest
+    command:
+      - redis-server
+    env_file:
+      - .env
+    restart: on-failure
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres
+    env_file:
+      - .env
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: on-failure
+    ports:
+      - "8888:80"
+    env_file:
+      - .env
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
+
+  nats:
+    image: nats:latest
+    entrypoint: /nats-server
+    command: "-c /config/server.conf"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./nats/data:/data
+      - ./nats/config/server.conf:/config/server.conf
+  
+  nats-nui:
+    image: ghcr.io/nats-nui/nui:latest
+    container_name: nats-nui
+    ports:
+      - "31311:31311"  # Порт для доступа к NATS NUI
+    volumes:
+      - ./nui/db:/db
+    depends_on:
+      - nats
+
+# volumes:
+#   data:
+#   config:
