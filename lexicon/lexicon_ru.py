@@ -30,4 +30,13 @@ LEXICON_RU: dict[str, str] = {
     'done': 'Задача выполнена!',
     'rescheduling': 'Задача перенесена на завтра.',
     'delete': 'Задача удалена!',
+    'other_answer': 'Этого я не понимаю...'
+}
+
+LEXICON_COMMANDS_RU: dict[str, str] = {
+    '/start': 'Перезапуск бота',
+    '/help': 'Справка по работе бота',
+    '/add-task': 'Добавление задачи',
+    '/tasks-list': 'Список задач',
+    '/finish-planning': 'Завершение планирования задач',
 }

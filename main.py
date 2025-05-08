@@ -11,7 +11,7 @@ from config_data.config import Config, load_config
 # ...
 # Импортируем вспомогательные функции для создания нужных объектов
 # ...
-from keyboards.main_menu import set_main_menu
+from keyboards.set_menu import set_main_menu
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
