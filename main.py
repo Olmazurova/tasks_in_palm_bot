@@ -4,9 +4,11 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from config_data.config import Config, load_config
 # Импортируем роутеры
-# ...
+from handlers import user
 # Импортируем миддлвари
 # ...
 # Импортируем вспомогательные функции для создания нужных объектов
@@ -32,14 +34,14 @@ async def main():
     config: Config = load_config()
 
     # Инициализируем объект хранилища
-    storage = ...
+    storage = RedisStorage()
 
     # Инициализируем бот и диспетчер
     bot = Bot(
         token=config.tg_bot.token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
-    dp = Dispatcher()
+    dp = Dispatcher(storage=storage)
 
     # Инициализируем другие объекты (пул соединений с БД, кеш и т.п.)
     # ...
@@ -52,7 +54,7 @@ async def main():
 
     # Регистриуем роутеры
     logger.info('Подключаем роутеры')
-    # ...
+    dp.include_router(user.router)
 
     # Регистрируем миддлвари
     logger.info('Подключаем миддлвари')
