@@ -30,7 +30,10 @@ LEXICON_RU: dict[str, str] = {
     'done': 'Задача выполнена! ✅U+2705, ✔U+2714',
     'rescheduling': 'Задача перенесена на завтра. ➡U+27A1, ↪U+21AA',
     'delete': 'Задача удалена! 🗑U+1F5D1, ❌U+274C, ❎U+274E',
-    'other_answer': 'Этого я не понимаю...'
+    'other_answer': 'Этого я не понимаю...',
+    'task': 'Задача добавлена!\n'
+            'Если есть ещё задачи - присылай!\n'
+            'Если больше задач нет - нажми "Завершить планирование".'
 }
 
 LEXICON_COMMANDS_RU: dict[str, str] = {
@@ -42,7 +45,7 @@ LEXICON_COMMANDS_RU: dict[str, str] = {
 }
 
 LEXICON_BUTTONS_RU: dict[str, str] = {
-    '/add-task': 'Добавление задачи ⏱U+23F1, 📝U+1F4DD, ✏U+270F, 🖋U+1F58B, ✍U+270D',
+    '/add-task': 'Добавить задачу ⏱U+23F1, 📝U+1F4DD, ✏U+270F, 🖋U+1F58B, ✍U+270D',
     '/tasks-list': 'Список задач 📜U+1F4DC, 📃U+1F4C3, 📑U+1F4D1, 📋U+1F4CB, ',
-    '/finish-planning': 'Завершение планирования задач 🔏U+1F50F, ⛔U+26D4, ',
+    '/finish-planning': 'Завершить планирование 🔏U+1F50F, ⛔U+26D4, ',
 }
