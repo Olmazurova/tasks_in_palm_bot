@@ -5,8 +5,8 @@ from aiogram import Router
 router = Router()
 
 @router.shutdown()
-async def on_shutdown(dispatcher):
+async def on_shutdown(db):
     """Закрывает соединение с БД."""
     logging.warning('Shutting down..')
-    dispatcher.db._conn.close()
+    db._conn.close()
     logging.warning("DB Connection closed")

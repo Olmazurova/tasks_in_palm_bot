@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import date, timedelta
 
+
 class Database:
     """ Класс работы с базой данных """
     def __init__(self, name):
@@ -18,7 +19,10 @@ class Database:
         create_users_table = '''
             CREATE TABLE IF NOT EXISTS users(
             user_id INTEGER PRIMARY KEY,
-            name TEXT
+            first_name TEXT,
+            last_name TEXT,
+            username TEXT,
+            language_code TEXT
             );
             '''
         create_tasks_table = '''
@@ -66,7 +70,8 @@ class Database:
         for task in tasks:
             insert_query = '''
             INSERT INTO user_tasks (user_id, task, plan_date, done) 
-            VALUES (?, ?, ?, ?);'''
+            VALUES (?, ?, ?, ?);
+            '''
             await self._execute_query(
                 insert_query, (user_id, task, planning_date, done)
             )
@@ -78,18 +83,18 @@ class Database:
         """Возвращает список задач пользователя на дату plan_date."""
 
         select_query = '''
-        SELECT task FROM user_tasks 
+        SELECT id, task FROM user_tasks 
         WHERE user_id = ? 
         AND plan_date = ? 
         AND done = 0
-        ORDER BY task;
+        ORDER BY id;
         '''
         record = await self._execute_query(
             select_query, (user_id, plan_date), select=True
         )
         return record
 
-    async def update_tasks(self, user_id, task_id, field, value):
+    async def update_task(self, user_id, task_id, field, value):
         """Вносит изменения в сведения о задаче."""
 
         update_query = '''
@@ -102,11 +107,56 @@ class Database:
         )
         logging.info(f"Task for user {user_id} updated.")
 
+    async def get_task(self, user_id, task_id):
+        """Возвращает конкретную задачу."""
+        select_query = '''
+                SELECT * FROM user_tasks 
+                WHERE user_id = ? 
+                AND id = ?
+                '''
+        record = await self._execute_query(
+            select_query, (user_id, task_id), select=True
+        )
+        return record
+
     async def delete_task(self, user_id, task_id):
         """Удаляет задачу из БД."""
-
         delete_query = '''
         DELETE FROM user_tasks WHERE id = ? AND user_id = ?;
         '''
         self._execute_query(delete_query, (task_id, user_id))
         logging.info(f"User's {user_id} task deleted.")
+
+    async def select_user(self, user_id):
+        """Возвращает информацию о пользователе или None."""
+        select_query = '''
+        SELECT * FROM users 
+        WHERE user_id = ?;
+        '''
+        record = await self._execute_query(
+            select_query, (user_id,), select=True
+        )
+        if record:
+            return record
+        return None
+
+    async def insert_user(self, user):
+        """Добавляет пользователя в БД."""
+
+        insert_query = '''
+        INSERT INTO users (
+        user_id, first_name, last_name, username, language_code
+        ) 
+        VALUES (?, ?, ?, ?, ?);
+        '''
+        await self._execute_query(
+            insert_query,
+            (
+                user.id,
+                user.first_name,
+                user.last_name,
+                user.username,
+                user.language_code
+            )
+        )
+        logging.info(f"User {user.id} added in DB")
