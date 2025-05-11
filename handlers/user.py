@@ -9,7 +9,9 @@ from aiogram.types import CallbackQuery, Message
 from keyboards.keyboard_utils import (main_keyboard, finish_keyboard,
                                       create_tasks_keyboard)
 from lexicon.lexicon_ru import LEXICON_RU, LEXICON_BUTTONS_RU
+from services.services import parsing_task
 from states.states import FSMAddTask
+from utils.utils import get_answer_of_tasks
 
 router = Router()
 
@@ -41,6 +43,7 @@ async def process_btn_add_task(message: Message, state: FSMContext):
     await message.answer(
         text=LEXICON_RU['/add-task'], reply_markup=finish_keyboard
     )
+
 
 # /tasks-list
 @router.message(F.text == LEXICON_BUTTONS_RU['/tasks-list'])
@@ -75,16 +78,7 @@ async def process_done_task(callback: CallbackQuery, state: FSMContext, db):
     await state.set_state(state=None)
     db.update_task(callback.from_user.id, callback.data, field='done', value=1)
     await callback.answer(text=LEXICON_RU['done'])
-    tasks = db.select_tasks(callback.from_user.id)
-    if not tasks:
-        await callback.message.reply(
-            text=LEXICON_RU['no-tasks'], reply_markup=main_keyboard
-        )
-    else:
-        tasks_keyboard = create_tasks_keyboard(tasks)
-        await callback.message.edit_text(
-            text=LEXICON_RU['/tasks-list'], reply_markup=tasks_keyboard
-        )
+    await get_answer_of_tasks(callback, db)
 
 
 # rescheduling
@@ -99,17 +93,7 @@ async def process_rescheduling_task(callback: CallbackQuery, db):
         value=task.plan_date + timedelta(days=1)
     )
     await callback.answer(text=LEXICON_RU['rescheduling'])
-    tasks = db.select_tasks(callback.from_user.id)
-    if not tasks:
-        await callback.message.reply(
-            text=LEXICON_RU['no-tasks'], reply_markup=main_keyboard
-        )
-    else:
-        tasks_keyboard = create_tasks_keyboard(tasks)
-        await callback.message.edit_text(
-            text=callback.message.text,
-            reply_markup=tasks_keyboard
-        )
+    await get_answer_of_tasks(callback, db)
 
 
 # delete
@@ -119,23 +103,19 @@ async def process_delete_task(callback: CallbackQuery, state: FSMContext, db):
     await state.set_state(state=None)
     db.delete_task(callback.from_user.id, callback.data)
     await callback.answer(text=LEXICON_RU['delete'])
-    tasks = db.select_tasks(callback.from_user.id)
-    if not tasks:
-        await callback.message.reply(
-            text=LEXICON_RU['no-tasks'], reply_markup=main_keyboard
-        )
-    else:
-        tasks_keyboard = create_tasks_keyboard(tasks)
-        await callback.message.edit_text(
-            text=callback.message.text,
-            reply_markup=tasks_keyboard
-        )
+    await get_answer_of_tasks(callback, db)
 
 
 # task
 @router.message(F.text, StateFilter(FSMAddTask.waiting_task))
-async def process_add_task(message: Message):
-    # парсим сообщение и добавляем задачи в список, FSM - waiting_task
+async def process_add_task(message: Message, db):
+    """Обработчик сообщения с задачами."""
+    tasks = parsing_task(message)
+    db.insert_tasks(
+        message.from_user.id,
+        tasks,
+        plan_date=message.date + timedelta(days=1)
+    )
     await message.answer(text=LEXICON_RU['task'])
 
 

@@ -61,7 +61,7 @@ class Database:
         cursor.close()
 
     async def insert_tasks(
-            self, user_id, tasks=None, planning_date=None, done=False
+            self, user_id, tasks=None, plan_date=None, done=False
     ):
         """Добавляет задачу в БД."""
 
@@ -73,7 +73,7 @@ class Database:
             VALUES (?, ?, ?, ?);
             '''
             await self._execute_query(
-                insert_query, (user_id, task, planning_date, done)
+                insert_query, (user_id, task, plan_date, done)
             )
         logging.info(f"Tasks for user {user_id} added")
 
