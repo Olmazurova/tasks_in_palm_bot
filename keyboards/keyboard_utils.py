@@ -4,6 +4,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 from lexicon.lexicon_ru import LEXICON_BUTTONS_RU
 
+# Создание кнопок и обычных клавиатур
 button_add, button_tasks, button_finish = [
     KeyboardButton(text=value)
     for value
@@ -29,11 +30,15 @@ finish_keyboard: ReplyKeyboardMarkup = finish_kb_builder.as_markup(
 
 # inline-keyboard
 
-def create_tasks_keyboard(tasks) -> InlineKeyboardMarkup:
+def create_tasks_keyboard(tasks, done=False) -> InlineKeyboardMarkup:
     """Создаёт клавиатуру из задач пользователя."""
+    prefix = '✔' if done else '❌'
+    suffix = 'done' if done else 'del'
     kb_builder = InlineKeyboardBuilder()
     for task in tasks:
         kb_builder.row(
-            InlineKeyboardButton(text=f'❌ {task.task}', callback_data=task.id)
+            InlineKeyboardButton(
+                text=f'{prefix} {task.task}',
+                callback_data=f'{task.id} {suffix}')
         )
     return kb_builder.as_markup()

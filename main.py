@@ -5,6 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config_data.config import Config, load_config
 from redis.asyncio import Redis
@@ -51,8 +52,11 @@ async def main():
     database = Database(config.db.database)
     database.connection()
 
+    # планировщик для отправки сообщений в определённое время
+    scheduler = AsyncIOScheduler()
+
     # Помещаем нужные объекты в workflow_data диспетчера
-    dp.workflow_data.update(db=database)
+    dp.workflow_data.update(db=database, scheduler=scheduler)
 
     # Настраиваем главное меню бота
     await set_main_menu(bot)

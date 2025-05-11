@@ -26,6 +26,7 @@ LEXICON_RU: dict[str, str] = {
                  'пиши с новой строки.',
     '/tasks-list': 'Вот список задач на сегодня:',
     '/finish-planning': 'Все дела запланированы!',
+    'check-tasks': 'Какие задачи выполнены? Отмечай!',
     'no-tasks': 'В списке пока нет задач. 🌚U+1F31A',
     'done': 'Задача выполнена! ✅U+2705, ✔U+2714',
     'rescheduling': 'Задача перенесена на завтра. ➡U+27A1, ↪U+21AA',
@@ -48,4 +49,8 @@ LEXICON_BUTTONS_RU: dict[str, str] = {
     '/add-task': 'Добавить задачу ⏱U+23F1, 📝U+1F4DD, ✏U+270F, 🖋U+1F58B, ✍U+270D',
     '/tasks-list': 'Список задач 📜U+1F4DC, 📃U+1F4C3, 📑U+1F4D1, 📋U+1F4CB, ',
     '/finish-planning': 'Завершить планирование 🔏U+1F50F, ⛔U+26D4, ',
+}
+
+LEXICON_SCHEDULED_MESSAGES_RU = {
+    'no-tasks': 'На сегодня в списке пока нет задач. 🌚U+1F31A',
 }
