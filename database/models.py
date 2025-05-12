@@ -14,7 +14,7 @@ class Database:
     def create_db(self):
         """Создание базы данных и таблиц в ней."""
         connection = sqlite3.connect(f"{self.name}.sqlite")
-        logging.info("Database created")
+
         cursor = connection.cursor()
         create_users_table = '''
             CREATE TABLE IF NOT EXISTS users(
@@ -27,16 +27,18 @@ class Database:
             '''
         create_tasks_table = '''
             CREATE TABLE IF NOT EXISTS user_tasks(
-            id INTEGER AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             user_id INTEGER,
             task TEXT,
-            plan_date INTEGER,
+            plan_date DATE,
             done INTEGER DEFAULT 0,
-            FOREIGN KEY(uset_id) REFERENCES users(user_id)
+            FOREIGN KEY(user_id) REFERENCES users(user_id)
             );
             '''
-        cursor.executemany(create_users_table, create_tasks_table)
+        cursor.execute(create_users_table)
+        cursor.execute(create_tasks_table)
         connection.commit()
+        logging.info("Database created")
         cursor.close()
 
     def connection(self):
@@ -53,12 +55,13 @@ class Database:
         cursor = self._conn.cursor()
         cursor.execute(query, args)
         if select:
-            records = cursor.fetchone()
+            records = cursor.fetchall()
             cursor.close()
             return records
         else:
             self._conn.commit()
         cursor.close()
+        return True
 
     async def insert_tasks(
             self, user_id, tasks=None, plan_date=None, done=False
@@ -72,10 +75,11 @@ class Database:
             INSERT INTO user_tasks (user_id, task, plan_date, done) 
             VALUES (?, ?, ?, ?);
             '''
-            await self._execute_query(
-                insert_query, (user_id, task, plan_date, done)
+            self._execute_query(
+                insert_query, user_id, task, plan_date, done
             )
         logging.info(f"Tasks for user {user_id} added")
+        return True
 
     async def select_tasks(
             self, user_id, plan_date=date.today() + timedelta(days=1)
@@ -89,10 +93,12 @@ class Database:
         AND done = 0
         ORDER BY id;
         '''
-        record = await self._execute_query(
-            select_query, (user_id, plan_date), select=True
+        record = self._execute_query(
+            select_query, user_id, plan_date, select=True
         )
-        return record
+        if record is not None:
+            return record
+        return False
 
     async def update_task(self, user_id, task_id, field, value):
         """Вносит изменения в сведения о задаче."""
@@ -103,7 +109,7 @@ class Database:
         WHERE id = ? AND user_id = ?;
         '''
         await self._execute_query(
-            update_query, (field, value, task_id, user_id)
+            update_query, field, value, task_id, user_id
         )
         logging.info(f"Task for user {user_id} updated.")
 
@@ -115,7 +121,7 @@ class Database:
                 AND id = ?
                 '''
         record = await self._execute_query(
-            select_query, (user_id, task_id), select=True
+            select_query, user_id, task_id, select=True
         )
         return record
 
@@ -124,21 +130,21 @@ class Database:
         delete_query = '''
         DELETE FROM user_tasks WHERE id = ? AND user_id = ?;
         '''
-        self._execute_query(delete_query, (task_id, user_id))
+        self._execute_query(delete_query, task_id, user_id)
         logging.info(f"User's {user_id} task deleted.")
 
     async def select_user(self, user_id):
         """Возвращает информацию о пользователе или None."""
         select_query = '''
         SELECT * FROM users 
-        WHERE user_id = ?;
+        WHERE user_id=?
         '''
-        record = await self._execute_query(
-            select_query, (user_id,), select=True
+        record = self._execute_query(
+            select_query, user_id, select=True
         )
-        if record:
+        if record is not None:
             return record
-        return None
+        return False
 
     async def insert_user(self, user):
         """Добавляет пользователя в БД."""
@@ -149,14 +155,17 @@ class Database:
         ) 
         VALUES (?, ?, ?, ?, ?);
         '''
-        await self._execute_query(
+        self._execute_query(
             insert_query,
-            (
                 user.id,
                 user.first_name,
                 user.last_name,
                 user.username,
-                user.language_code
-            )
+                user.language_code,
         )
         logging.info(f"User {user.id} added in DB")
+
+
+if __name__ == '__main__':
+    db = Database('database/db_bot')
+    db.create_db()

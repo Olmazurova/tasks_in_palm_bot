@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart, StateFilter
@@ -7,6 +7,7 @@ from aiogram.types import CallbackQuery, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.models import Database
+from filters.filters import IsDelTaskCallbackData
 from keyboards.keyboard_utils import (main_keyboard, finish_keyboard,
                                       create_tasks_keyboard)
 from lexicon.lexicon_ru import LEXICON_RU, LEXICON_BUTTONS_RU
@@ -27,7 +28,8 @@ async def process_start_command(
 ):
     """Обработчик команды /start."""
     # Проверяем есть ли пользователь в БД, если нет - заносим туда
-    if db.select_user(message.from_user.id) is None:
+    user = await db.select_user(message.from_user.id)
+    if not user:
         await db.insert_user(message.from_user)
     # Запускаем основной планировщик для пользователя
     scheduler.add_job(
@@ -57,22 +59,12 @@ async def process_help_command(message: Message, state: FSMContext):
     await message.answer(text=LEXICON_RU['/help'], reply_markup=main_keyboard)
 
 
-# /add-task
-@router.message(F.text == LEXICON_BUTTONS_RU['/add-task'])
-async def process_btn_add_task(message: Message, state: FSMContext):
-    """Обработчик команды /add-task."""
-    await state.set_state(FSMAddTask.waiting_task)
-    await message.answer(
-        text=LEXICON_RU['/add-task'], reply_markup=finish_keyboard
-    )
-
-
 # /tasks-list
-@router.message(F.text == LEXICON_BUTTONS_RU['/tasks-list'])
+@router.message(F.text == LEXICON_BUTTONS_RU['/tasks_list'])
 async def process_btn_tasks_list(
         message: Message, state: FSMContext, db: Database
 ):
-    """Обработчик команды /tasks-list."""
+    """Обработчик команды /tasks_list."""
     await state.set_state(state=None)
     tasks = await db.select_tasks(message.from_user.id)
     if not tasks:
@@ -82,16 +74,16 @@ async def process_btn_tasks_list(
     else:
         tasks_keyboard = create_tasks_keyboard(tasks)
         await message.answer(
-            text=LEXICON_RU['/tasks-list'], reply_markup=tasks_keyboard
+            text=LEXICON_RU['/tasks_list'], reply_markup=tasks_keyboard
         )
 
 
 # /finish-planning
-@router.message(F.text == LEXICON_BUTTONS_RU['/finish-planning'])
+@router.message(F.text == LEXICON_BUTTONS_RU['/finish_planning'])
 async def process_btn_finish_task(message: Message, state: FSMContext):
     await state.set_state(state=None)
     await message.answer(
-        text=LEXICON_RU['/finish-planning'], reply_markup=main_keyboard
+        text=LEXICON_RU['/finish_planning'], reply_markup=main_keyboard
     )
 
 
@@ -125,15 +117,25 @@ async def process_rescheduling_task(callback: CallbackQuery, db: Database):
 
 
 # delete
-@router.callback_query(F.data.in_(['del']))
+@router.callback_query(IsDelTaskCallbackData())
 async def process_delete_task(
         callback: CallbackQuery, state: FSMContext, db: Database
 ):
     """Обработчик удаления задачи из БД."""
     await state.set_state(state=None)
-    await db.delete_task(callback.from_user.id, callback.data)
+    await db.delete_task(callback.from_user.id, callback.data.split()[0])
     await callback.answer(text=LEXICON_RU['delete'])
     await get_answer_of_tasks(callback, db)
+
+
+# /add-task
+@router.message(F.text == LEXICON_BUTTONS_RU['/add_task'])
+async def process_btn_add_task(message: Message, state: FSMContext):
+    """Обработчик команды /add_task."""
+    await state.set_state(FSMAddTask.waiting_task)
+    await message.answer(
+        text=LEXICON_RU['/add_task'], reply_markup=finish_keyboard
+    )
 
 
 # task
@@ -141,10 +143,12 @@ async def process_delete_task(
 async def process_add_task(message: Message, db: Database):
     """Обработчик сообщения с задачами."""
     tasks = parsing_task(message)
+    plan_date = date.today() + timedelta(days=1)
+    print(plan_date)
     await db.insert_tasks(
         message.from_user.id,
         tasks,
-        plan_date=message.date + timedelta(days=1)
+        plan_date=plan_date
     )
     await message.answer(text=LEXICON_RU['task'])
 

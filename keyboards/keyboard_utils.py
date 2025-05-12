@@ -38,7 +38,7 @@ def create_tasks_keyboard(tasks, done=False) -> InlineKeyboardMarkup:
     for task in tasks:
         kb_builder.row(
             InlineKeyboardButton(
-                text=f'{prefix} {task.task}',
-                callback_data=f'{task.id} {suffix}')
+                text=f'{prefix} {task[1]}',
+                callback_data=f'{task[0]} {suffix}')
         )
     return kb_builder.as_markup()

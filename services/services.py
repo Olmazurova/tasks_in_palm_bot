@@ -41,7 +41,7 @@ async def send_list_tasks(
         tasks_keyboard = create_tasks_keyboard(tasks, done=True)
         await bot.send_message(
             chat_id=user_id,
-            text=LEXICON_RU['/tasks-list'],
+            text=LEXICON_RU['/tasks_list'],
             reply_markup=tasks_keyboard
         )
         date = datetime.today()

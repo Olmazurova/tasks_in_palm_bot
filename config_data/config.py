@@ -37,8 +37,8 @@ def load_config(path: str | None = None) -> Config:
         ),
         db=DatabaseConfig(
             database=env('DATABASE'),
-            db_host=env('DB_HOST') or None,
-            db_user=env('DB_USER') or None,
-            db_password=env('DB_PASSWORD') or None
+            db_host=env('DB_HOST'),
+            db_user=env('DB_USER'),
+            db_password=env('DB_PASSWORD')
         )
     )
