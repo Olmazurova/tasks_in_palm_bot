@@ -32,4 +32,3 @@ async def get_message_answer_of_tasks(message, db):
             text=LEXICON_RU['/tasks_list'],
             reply_markup=tasks_keyboard,
         )
-

@@ -9,7 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from database.models import Database
 from filters.filters import IsDelTaskCallbackData
 from keyboards.keyboard_utils import (main_kb_builder, finish_kb_builder)
-from lexicon.lexicon_ru import LEXICON_RU, LEXICON_BUTTONS_RU
+from lexicon.lexicon_ru import LEXICON_RU
 from services.services import parsing_task, send_list_tasks
 from states.states import FSMTask
 from utils.utils import (get_callback_answer_of_tasks,
@@ -18,7 +18,6 @@ from utils.utils import (get_callback_answer_of_tasks,
 router = Router()
 
 
-# Этот хэндлер срабатывает на команду /start
 @router.message(CommandStart())
 async def process_start_command(
         message: Message,
@@ -35,10 +34,10 @@ async def process_start_command(
     scheduler.add_job(
         send_list_tasks,
         trigger='cron',
-        hour=16,
-        minute=20,
+        hour=20,
+        minute=0,
         start_date=datetime.now(),
-        id=f'{message.from_user.id} - main',
+        id=f'main: user {message.from_user.id}, date {message.date}',
         kwargs={
             'bot': message.bot,
             'user_id': message.from_user.id,
@@ -54,7 +53,6 @@ async def process_start_command(
     )
 
 
-# Этот хэндлер срабатывает на команду /help
 @router.message(Command(commands='help'))
 async def process_help_command(message: Message, state: FSMContext):
     """Обработчик команды /help."""
@@ -64,7 +62,6 @@ async def process_help_command(message: Message, state: FSMContext):
     )
 
 
-# /add-task
 @router.message(Command(commands='add_task'))
 @router.callback_query(F.data.in_(['/add_task']))
 async def process_btn_add_task(
@@ -84,7 +81,6 @@ async def process_btn_add_task(
         )
 
 
-# /tasks-list
 @router.message(Command(commands='tasks_list'))
 @router.callback_query(F.data.in_(['/tasks_list']))
 async def process_btn_tasks_list(
@@ -98,7 +94,6 @@ async def process_btn_tasks_list(
         await get_message_answer_of_tasks(update, db)
 
 
-# /finish-planning
 @router.message(
     Command(commands='finish_planning'), StateFilter(FSMTask.waiting_task)
 )
@@ -106,21 +101,13 @@ async def process_btn_tasks_list(
     F.data.in_(['/finish_planning']), StateFilter(FSMTask.waiting_task)
 )
 async def process_btn_finish_task(
-        # bot: Bot,
         update: CallbackQuery | Message,
         state: FSMContext,
-        db: Database
 ):
     """Обработчик нажатия кнопки "Завершить планирование"."""
     await state.set_state(state=None)
-    messages_id = await db.select_messages_id(update.from_user.id)
-    print(messages_id)
-    if messages_id:
-        messages = [element[0] for element in messages_id]
-        await update.bot.delete_messages(update.chat.id, message_ids=messages)
-        await db.delete_messages_id(update.from_user.id, messages_id)
     if isinstance(update, CallbackQuery):
-        await update.message.edit_text(
+        await update.message.answer(
             text=LEXICON_RU['/finish_planning'],
             reply_markup=main_kb_builder.as_markup(),
         )
@@ -131,7 +118,6 @@ async def process_btn_finish_task(
         )
 
 
-# back
 @router.callback_query(F.data.in_(['back']))
 async def process_btn_back(
         callback: CallbackQuery, state: FSMContext,
@@ -152,7 +138,6 @@ async def process_btn_back(
         )
 
 
-# done
 @router.callback_query(F.data.in_(['done']))
 async def process_done_task(
         callback: CallbackQuery, db: Database
@@ -165,7 +150,6 @@ async def process_done_task(
     await get_callback_answer_of_tasks(callback, db)
 
 
-# rescheduling
 @router.callback_query(F.data.in_(['rescheduling']))
 async def process_rescheduling_task(callback: CallbackQuery, db: Database):
     """Обработчик переноса даты планирования задачи."""
@@ -180,7 +164,6 @@ async def process_rescheduling_task(callback: CallbackQuery, db: Database):
     await get_callback_answer_of_tasks(callback, db)
 
 
-# delete
 @router.callback_query(IsDelTaskCallbackData())
 async def process_delete_task(
         callback: CallbackQuery, db: Database
@@ -191,19 +174,17 @@ async def process_delete_task(
     await get_callback_answer_of_tasks(callback, db)
 
 
-# task
 @router.message(F.text, StateFilter(FSMTask.waiting_task))
 async def process_add_task(message: Message, db: Database):
     """Обработчик сообщения с задачами."""
     tasks = parsing_task(message)
     plan_date = date.today() + timedelta(days=1)
-    print(plan_date)
+
     await db.insert_tasks(
         message.from_user.id,
         tasks,
         plan_date=plan_date
     )
-    await db.insert_message_id(message.from_user.id, message.message_id)
     await message.answer(text=LEXICON_RU['task'])
 
 

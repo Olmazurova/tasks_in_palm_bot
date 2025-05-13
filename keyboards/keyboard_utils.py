@@ -1,34 +1,23 @@
-from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
-                           InlineKeyboardMarkup, InlineKeyboardButton)
-from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from lexicon.lexicon_ru import LEXICON_BUTTONS_RU
 
-# Создание кнопок и основных
+# Создание кнопок и основных клавиатур
 button_add, button_tasks, button_finish, button_back = [
     InlineKeyboardButton(text=value, callback_data=key)
     for key, value
     in LEXICON_BUTTONS_RU.items()
 ]
 
-main_kb_builder = InlineKeyboardBuilder()
-main_kb_builder.row(button_add, button_tasks, width=2)
-
-# main_keyboard: ReplyKeyboardMarkup = main_kb_builder.as_markup(
-#     one_time_keyboard=True,
-#     resize_keyboard=True
-# )
+main_kb_builder = InlineKeyboardBuilder().row(
+    button_add, button_tasks, width=2
+)
 
 finish_kb_builder = InlineKeyboardBuilder().row(
     button_finish, button_tasks, width=2
 )
 
-# finish_keyboard: ReplyKeyboardMarkup = finish_kb_builder.as_markup(
-#     one_time_keyboard=True,
-#     resize_keyboard=True
-# )
-
-# inline-keyboard
 
 def create_tasks_keyboard(tasks, done=False, state=False) -> InlineKeyboardMarkup:
     """Создаёт клавиатуру из задач пользователя."""
