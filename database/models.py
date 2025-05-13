@@ -35,8 +35,14 @@ class Database:
             FOREIGN KEY(user_id) REFERENCES users(user_id)
             );
             '''
+        create_messages_table = '''
+        CREATE TABLE IF NOT EXISTS messages_id(
+        id INTEGER PRIMARY KEY NOT NULL,
+        user_id INTEGER NOT NULL);
+        '''
         cursor.execute(create_users_table)
         cursor.execute(create_tasks_table)
+        cursor.execute(create_messages_table)
         connection.commit()
         logging.info("Database created")
         cursor.close()
@@ -132,6 +138,7 @@ class Database:
         '''
         self._execute_query(delete_query, task_id, user_id)
         logging.info(f"User's {user_id} task deleted.")
+        return True
 
     async def select_user(self, user_id):
         """Возвращает информацию о пользователе или None."""
@@ -164,6 +171,37 @@ class Database:
                 user.language_code,
         )
         logging.info(f"User {user.id} added in DB")
+
+    async def insert_message_id(self, user_id, message_id):
+        """Добавляет message_id в БД."""
+        insert_query = '''
+        INSERT INTO messages_id (id, user_id) 
+        VALUES (?, ?);
+        '''
+        self._execute_query(insert_query, message_id, user_id)
+        logging.info(f"Message ID for user {user_id} added")
+        return True
+
+    async def select_messages_id(self, user_id):
+        """Возвращает список message_id добавленных пользователем задач."""
+        select_query = '''
+        SELECT id FROM messages_id
+        WHERE user_id = ?;
+        '''
+        record = self._execute_query(select_query, user_id, select=True)
+        if record is not None:
+            return record
+        return False
+
+    async def delete_messages_id(self, user_id, messages_id):
+        """Удаляет message_id задачи из БД."""
+        delete_query = '''
+        DELETE FROM messages_id WHERE id = ? AND user_id = ?;
+        '''
+        for message_id in messages_id:
+            self._execute_query(delete_query, message_id, user_id)
+        logging.info(f"User's {user_id} messages deleted.")
+        return True
 
 
 if __name__ == '__main__':
