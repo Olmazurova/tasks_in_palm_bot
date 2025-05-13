@@ -50,6 +50,7 @@ LEXICON_BUTTONS_RU: dict[str, str] = {
     '/add_task': 'Добавить задачу 🖋',
     '/tasks_list': 'Список задач 📜',
     '/finish_planning': 'Завершить планирование 🔏',
+    'back': 'Назад 🔙️',
 }
 
 LEXICON_SCHEDULED_MESSAGES_RU = {
@@ -57,5 +58,5 @@ LEXICON_SCHEDULED_MESSAGES_RU = {
 }
 
 OTHER = {
-    'symbol': '⏱, 📝, ✏, 🖋, ✍, 📜, 📃, 📑, 🔏, ⛔, ❓, 🗑, ❌, ❎,  ➡, ↪, ✅, ✔'
+    'symbol': '⏱, 📝, ✏, 🖋, ✍, 📜, 📃, 📑, 🔏, ⛔, ❓, 🗑, ❌, ❎,  ➡, ↪, ✅, ✔, ⬅️, 🔙, ↩️'
 }

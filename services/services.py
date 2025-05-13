@@ -6,7 +6,7 @@ from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.models import Database
-from keyboards.keyboard_utils import main_keyboard, create_tasks_keyboard
+from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
 from lexicon.lexicon_ru import LEXICON_SCHEDULED_MESSAGES_RU, LEXICON_RU
 
 router = Router()
@@ -35,7 +35,7 @@ async def send_list_tasks(
         await bot.send_message(
             chat_id=user_id,
             text=LEXICON_SCHEDULED_MESSAGES_RU['no-tasks'],
-            reply_markup = main_keyboard,
+            reply_markup=main_kb_builder.as_markup(),
         )
     else:
         tasks_keyboard = create_tasks_keyboard(tasks, done=True)

@@ -199,7 +199,7 @@ class Database:
         DELETE FROM messages_id WHERE id = ? AND user_id = ?;
         '''
         for message_id in messages_id:
-            self._execute_query(delete_query, message_id, user_id)
+            self._execute_query(delete_query, *message_id, user_id)
         logging.info(f"User's {user_id} messages deleted.")
         return True
 
