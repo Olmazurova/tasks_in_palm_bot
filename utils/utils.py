@@ -2,7 +2,7 @@ from lexicon.lexicon_ru import LEXICON_RU
 from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
 
 
-async def get_callback_answer_of_tasks(callback, db):
+async def get_callback_answer_of_tasks(callback, db, key='/tasks_list'):
     """Отправляет ответ на нажатие кнопки в зависимости от наличия задач."""
     tasks = await db.select_tasks(callback.from_user.id)
     if not tasks:
@@ -13,7 +13,7 @@ async def get_callback_answer_of_tasks(callback, db):
     else:
         tasks_keyboard = create_tasks_keyboard(tasks)
         await callback.message.edit_text(
-            text=LEXICON_RU['/tasks_list'],
+            text=LEXICON_RU[key],
             reply_markup=tasks_keyboard,
         )
 

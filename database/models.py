@@ -17,32 +17,35 @@ class Database:
 
         cursor = connection.cursor()
         create_users_table = '''
-            CREATE TABLE IF NOT EXISTS users(
-            user_id INTEGER PRIMARY KEY,
-            first_name TEXT,
-            last_name TEXT,
-            username TEXT,
-            language_code TEXT
-            );
-            '''
+        CREATE TABLE IF NOT EXISTS users(
+        user_id INTEGER PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        username TEXT,
+        language_code TEXT
+        );
+        '''
         create_tasks_table = '''
-            CREATE TABLE IF NOT EXISTS user_tasks(
-            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            user_id INTEGER,
-            task TEXT,
-            plan_date DATE,
-            done INTEGER DEFAULT 0,
-            FOREIGN KEY(user_id) REFERENCES users(user_id)
-            );
-            '''
-        create_messages_table = '''
-        CREATE TABLE IF NOT EXISTS messages_id(
-        id INTEGER PRIMARY KEY NOT NULL,
-        user_id INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS user_tasks(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        user_id INTEGER,
+        task TEXT,
+        plan_date DATE,
+        done INTEGER DEFAULT 0,
+        FOREIGN KEY(user_id) REFERENCES users(user_id)
+        );
+        '''
+        create_jobs_table = '''
+        CREATE TABLE IF NOT EXISTS jobs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        user_id INTEGER NOT NULL,
+        job TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(user_id)
+        );
         '''
         cursor.execute(create_users_table)
         cursor.execute(create_tasks_table)
-        cursor.execute(create_messages_table)
+        cursor.execute(create_jobs_table)
         connection.commit()
         logging.info("Database created")
         cursor.close()
@@ -93,7 +96,7 @@ class Database:
         """Возвращает список задач пользователя на дату plan_date."""
 
         select_query = '''
-        SELECT id, task FROM user_tasks 
+        SELECT id, user_id, task FROM user_tasks 
         WHERE user_id = ? 
         AND plan_date = ? 
         AND done = 0
@@ -108,24 +111,30 @@ class Database:
 
     async def update_task(self, user_id, task_id, field, value):
         """Вносит изменения в сведения о задаче."""
-
-        update_query = '''
-        UPDATE user_tasks 
-        SET ? = ? 
-        WHERE id = ? AND user_id = ?;
-        '''
-        await self._execute_query(
-            update_query, field, value, task_id, user_id
+        if field == 'done':
+            update_query = '''
+            UPDATE user_tasks 
+            SET done = ? 
+            WHERE id = ? AND user_id = ?;
+            '''
+        else:
+            update_query = '''
+            UPDATE user_tasks 
+            SET plan_date = ? 
+            WHERE id = ? AND user_id = ?;
+            '''
+        self._execute_query(
+            update_query, value, task_id, user_id
         )
         logging.info(f"Task for user {user_id} updated.")
 
     async def get_task(self, user_id, task_id):
         """Возвращает конкретную задачу."""
         select_query = '''
-                SELECT * FROM user_tasks 
-                WHERE user_id = ? 
-                AND id = ?
-                '''
+        SELECT * FROM user_tasks 
+        WHERE user_id = ? 
+        AND id = ?
+        '''
         record = await self._execute_query(
             select_query, user_id, task_id, select=True
         )
@@ -172,35 +181,31 @@ class Database:
         )
         logging.info(f"User {user.id} added in DB")
 
-    async def insert_message_id(self, user_id, message_id):
-        """Добавляет message_id в БД."""
+    async def insert_job(self, user_id, job):
+        """Добавляет job в БД."""
         insert_query = '''
-        INSERT INTO messages_id (id, user_id) 
+        INSERT INTO jobs (user_id, job) 
         VALUES (?, ?);
         '''
-        self._execute_query(insert_query, message_id, user_id)
-        logging.info(f"Message ID for user {user_id} added")
+        self._execute_query(insert_query, user_id, job)
+        logging.info(f"Job for user {user_id} added")
         return True
 
-    async def select_messages_id(self, user_id):
-        """Возвращает список message_id добавленных пользователем задач."""
-        select_query = '''
-        SELECT id FROM messages_id
-        WHERE user_id = ?;
-        '''
-        record = self._execute_query(select_query, user_id, select=True)
+    async def get_jobs(self):
+        """Возвращает список job добавленных пользователем задач."""
+        select_query = '''SELECT job FROM jobs;'''
+        record = self._execute_query(select_query, select=True)
         if record is not None:
             return record
         return False
 
-    async def delete_messages_id(self, user_id, messages_id):
+    async def delete_job(self, user_id, job_id):
         """Удаляет message_id задачи из БД."""
         delete_query = '''
-        DELETE FROM messages_id WHERE id = ? AND user_id = ?;
+        DELETE FROM jobs WHERE id = ? AND user_id = ?;
         '''
-        for message_id in messages_id:
-            self._execute_query(delete_query, *message_id, user_id)
-        logging.info(f"User's {user_id} messages deleted.")
+        self._execute_query(delete_query, job_id, user_id)
+        logging.info(f"User's {user_id} job deleted.")
         return True
 
 

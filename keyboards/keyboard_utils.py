@@ -1,10 +1,27 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from lexicon.lexicon_ru import LEXICON_BUTTONS_RU
 
+
+class DoneCallbackFactory(CallbackData, prefix='done'):
+    user_id: str
+    task_id: str
+
+
+class DelCallbackFactory(CallbackData, prefix='del'):
+    user_id: str
+    task_id: str
+
+
+class TransferCallbackFactory(CallbackData, prefix='transfer'):
+    user_id: str
+    task_id: str
+
+
 # Создание кнопок и основных клавиатур
-button_add, button_tasks, button_finish, button_back = [
+button_add, button_tasks, button_finish, button_back, button_transfer = [
     InlineKeyboardButton(text=value, callback_data=key)
     for key, value
     in LEXICON_BUTTONS_RU.items()
@@ -21,15 +38,32 @@ finish_kb_builder = InlineKeyboardBuilder().row(
 
 def create_tasks_keyboard(tasks, done=False, state=False) -> InlineKeyboardMarkup:
     """Создаёт клавиатуру из задач пользователя."""
-    prefix = '✔' if done else '❌'
-    suffix = 'done' if done else 'del'
+    prefix = '✅' if done else '❌'
+    callback_factory = DoneCallbackFactory if done else DelCallbackFactory
     kb_builder = InlineKeyboardBuilder()
-    for task in tasks:
-        kb_builder.row(
-            InlineKeyboardButton(
-                text=f'{prefix} {task[1]}',
-                callback_data=f'{task[0]} {suffix}')
-        )
+    if done:
+        for task in tasks:
+            kb_builder.button(
+                text=f'{prefix} {task[2]}',
+                callback_data=callback_factory(user_id=task[1], task_id=task[0])
+            )
+            kb_builder.button(
+                text='↪',
+                callback_data=TransferCallbackFactory(
+                    user_id=task[1], task_id=task[0]
+                )
+            )
+        kb_builder.adjust(2)
+    else:
+        for task in tasks:
+            kb_builder.button(
+                text=f'{prefix} {task[2]}',
+                callback_data=callback_factory(
+                    user_id=task[1],
+                    task_id=task[0]
+                )
+            )
     if not done and not state:
         kb_builder.row(button_back)
+
     return kb_builder.as_markup()

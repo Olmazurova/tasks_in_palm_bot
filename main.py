@@ -5,12 +5,15 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
+from apscheduler.jobstores.redis import RedisJobStore
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler_di import ContextSchedulerDecorator
 
 from config_data.config import Config, load_config
 from redis.asyncio import Redis
 # Импортируем роутеры
-from handlers import user
+from handlers import admin, user
 from services import services
 # Импортируем миддлвари
 # ...
@@ -29,6 +32,8 @@ async def main():
         level=logging.INFO,
         format='%(filename)s:%(lineno)d #%(levelname)-8s '
                '[%(asctime)s] - %(name)s - %(message)s')
+
+    logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
     # Выводим в консоль информацию о начале запуска бота
     logger.info('Starting bot')
@@ -53,8 +58,16 @@ async def main():
     database.connection()
 
     # планировщик для отправки сообщений в определённое время
-    scheduler = AsyncIOScheduler()
-
+    job_stores = {
+        'default': RedisJobStore()
+    }
+    scheduler = ContextSchedulerDecorator(AsyncIOScheduler(jobstores=job_stores))
+    scheduler.ctx.add_instance(bot, Bot)
+    scheduler.ctx.add_instance(database, Database)
+    scheduler.ctx.add_instance(scheduler, AsyncIOScheduler)
+    # jobs = await database.get_jobs()
+    # if jobs:
+    scheduler.start()
     # Помещаем нужные объекты в workflow_data диспетчера
     dp.workflow_data.update(db=database, scheduler=scheduler)
 
@@ -63,6 +76,7 @@ async def main():
 
     # Регистриуем роутеры
     logger.info('Подключаем роутеры')
+    dp.include_router(admin.router)
     dp.include_router(user.router)
     dp.include_router(services.router)
 

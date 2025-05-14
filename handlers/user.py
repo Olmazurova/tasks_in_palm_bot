@@ -1,14 +1,15 @@
 from datetime import datetime, timedelta, date
 
-from aiogram import Bot, F, Router
+from aiogram import F, Router
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.models import Database
-from filters.filters import IsDelTaskCallbackData
-from keyboards.keyboard_utils import (main_kb_builder, finish_kb_builder)
+from keyboards.keyboard_utils import (main_kb_builder, finish_kb_builder,
+                                      DoneCallbackFactory, DelCallbackFactory,
+                                      TransferCallbackFactory)
 from lexicon.lexicon_ru import LEXICON_RU
 from services.services import parsing_task, send_list_tasks
 from states.states import FSMTask
@@ -31,21 +32,15 @@ async def process_start_command(
     if not user:
         await db.insert_user(message.from_user)
     # Запускаем основной планировщик для пользователя
-    scheduler.add_job(
+    job = scheduler.add_job(
         send_list_tasks,
-        trigger='cron',
-        hour=20,
-        minute=0,
+        trigger='interval',
+        # hour=9,
+        minutes=10,
         start_date=datetime.now(),
         id=f'main: user {message.from_user.id}, date {message.date}',
-        kwargs={
-            'bot': message.bot,
-            'user_id': message.from_user.id,
-            'db': db,
-            'scheduler': scheduler,
-        }
+        kwargs={'user_id': message.from_user.id,}
     )
-    scheduler.start()
 
     await state.set_state(state=FSMTask.start)
     await message.answer(
@@ -138,40 +133,42 @@ async def process_btn_back(
         )
 
 
-@router.callback_query(F.data.in_(['done']))
+@router.callback_query(DoneCallbackFactory.filter())
 async def process_done_task(
-        callback: CallbackQuery, db: Database
+        callback: CallbackQuery, callback_data: DelCallbackFactory, db: Database
 ):
     """Обработчик выполнения задачи."""
     await db.update_task(
-        callback.from_user.id, callback.data, field='done', value=1
+        callback_data.user.id, callback_data.task_id, field='done', value=1
     )
     await callback.answer(text=LEXICON_RU['done'])
-    await get_callback_answer_of_tasks(callback, db)
+    await get_callback_answer_of_tasks(callback, db, key='check-tasks')  # TODO: исправить отправку клавы
 
 
-@router.callback_query(F.data.in_(['rescheduling']))
-async def process_rescheduling_task(callback: CallbackQuery, db: Database):
+@router.callback_query(TransferCallbackFactory.filter())
+async def process_rescheduling_task(
+        callback: CallbackQuery, callback_data: DelCallbackFactory, db: Database
+):
     """Обработчик переноса даты планирования задачи."""
-    task = await db.get_task(callback.from_user.id, callback.data)
+    task = await db.get_task(callback_data.user.id, callback_data.task_id)
     await db.update_task(
-        callback.from_user.id,
-        callback.data,
+        callback_data.user.id,
+        callback_data.task_id,
         field='plan_date',
         value=task.plan_date + timedelta(days=1)
     )
     await callback.answer(text=LEXICON_RU['rescheduling'])
-    await get_callback_answer_of_tasks(callback, db)
+    await get_callback_answer_of_tasks(callback, db, key='check-tasks') # TODO: исправить отправку клавы
 
 
-@router.callback_query(IsDelTaskCallbackData())
+@router.callback_query(DelCallbackFactory.filter())
 async def process_delete_task(
-        callback: CallbackQuery, db: Database
+        callback: CallbackQuery, callback_data: DelCallbackFactory, db: Database
 ):
     """Обработчик удаления задачи из БД."""
-    await db.delete_task(callback.from_user.id, callback.data.split()[0])
+    await db.delete_task(callback_data.user.id, callback_data.task_id)
     await callback.answer(text=LEXICON_RU['delete'])
-    await get_callback_answer_of_tasks(callback, db)
+    await get_callback_answer_of_tasks(callback, db) # TODO: исправить отправку клавы
 
 
 @router.message(F.text, StateFilter(FSMTask.waiting_task))
