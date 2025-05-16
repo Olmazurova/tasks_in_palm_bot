@@ -135,7 +135,7 @@ class Database:
         WHERE user_id = ? 
         AND id = ?
         '''
-        record = await self._execute_query(
+        record = self._execute_query(
             select_query, user_id, task_id, select=True
         )
         return record

@@ -1,34 +1,45 @@
+from datetime import date, timedelta
+
+from aiogram_i18n import I18nContext, LazyProxy
+
 from lexicon.lexicon_ru import LEXICON_RU
 from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
 
 
-async def get_callback_answer_of_tasks(callback, db, key='/tasks_list'):
+async def get_callback_answer_of_tasks(
+    callback, 
+    db, 
+    i18n, 
+    done=False, 
+    key='tasks_list', 
+    date=date.today() + timedelta(days=1),
+):
     """Отправляет ответ на нажатие кнопки в зависимости от наличия задач."""
     tasks = await db.select_tasks(callback.from_user.id)
     if not tasks:
         await callback.message.edit_text(
-            text=LEXICON_RU['no-tasks'],
+            text=i18n.get('no-tasks', case=1),
             reply_markup=main_kb_builder.as_markup(),
         )
     else:
-        tasks_keyboard = create_tasks_keyboard(tasks)
+        tasks_keyboard = create_tasks_keyboard(tasks, done=done)
         await callback.message.edit_text(
-            text=LEXICON_RU[key],
+            text=i18n.get(key, date=date),
             reply_markup=tasks_keyboard,
         )
 
 
-async def get_message_answer_of_tasks(message, db):
+async def get_message_answer_of_tasks(message, db, i18n):
     """Отправляет ответ на команду в зависимости от наличия задач."""
     tasks = await db.select_tasks(message.from_user.id)
     if not tasks:
         await message.answer(
-            text=LEXICON_RU['no-tasks'],
+            text=i18n.get('no-tasks', case=1),
             reply_markup=main_kb_builder.as_markup(),
         )
     else:
         tasks_keyboard = create_tasks_keyboard(tasks, state=True)
         await message.answer(
-            text=LEXICON_RU['/tasks_list'],
+            text=i18n.get('tasks_list', date=date.today() + timedelta(days=1)),
             reply_markup=tasks_keyboard,
         )

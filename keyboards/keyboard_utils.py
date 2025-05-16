@@ -6,18 +6,18 @@ from lexicon.lexicon_ru import LEXICON_BUTTONS_RU
 
 
 class DoneCallbackFactory(CallbackData, prefix='done'):
-    user_id: str
-    task_id: str
+    user_id: int
+    task_id: int
 
 
 class DelCallbackFactory(CallbackData, prefix='del'):
-    user_id: str
-    task_id: str
+    user_id: int
+    task_id: int
 
 
 class TransferCallbackFactory(CallbackData, prefix='transfer'):
-    user_id: str
-    task_id: str
+    user_id: int
+    task_id: int
 
 
 # Создание кнопок и основных клавиатур
@@ -63,6 +63,7 @@ def create_tasks_keyboard(tasks, done=False, state=False) -> InlineKeyboardMarku
                     task_id=task[0]
                 )
             )
+        kb_builder.adjust(1)
     if not done and not state:
         kb_builder.row(button_back)
 
