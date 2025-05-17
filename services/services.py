@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from aiogram import Router, Bot
 from aiogram.types import Message
 from aiogram_i18n import I18nContext, LazyProxy
+from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore, FluentBundle
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
@@ -33,7 +34,7 @@ async def send_list_tasks(
         user_id, 
         db: Database, 
         scheduler: AsyncIOScheduler,
-        i18n: I18nContext,
+        i18n: FluentRuntimeCore,
 ):
     """Отправляет пользователю список задач каждый день в 9 утра."""
     tasks = await db.select_tasks(user_id, plan_date=date.today())
@@ -45,12 +46,13 @@ async def send_list_tasks(
         )
     else:
         tasks_keyboard = create_tasks_keyboard(tasks, done=True)
+        job_date = date.today()
         await bot.send_message(
             chat_id=user_id,
-            text=i18n.get('check-tasks'),
+            text=i18n.get('check-tasks', date=job_date),
             reply_markup=tasks_keyboard
         )
-        job_date = date.today()
+
         scheduler.add_job(
             check_task_completion,
             trigger='interval',
@@ -58,7 +60,7 @@ async def send_list_tasks(
             start_date=datetime.now(),
             end_date=date.today() + timedelta(hours=21),
             id=f'{user_id} - {job_date}',
-            kwargs={'user_id': user_id, 'i18n': i18n},
+            kwargs={'user_id': user_id},
         )
 
 
@@ -67,7 +69,7 @@ async def check_task_completion(
         user_id: int, 
         db: Database, 
         scheduler: AsyncIOScheduler,
-        i18n: I18nContext,
+        i18n: FluentRuntimeCore,
 ):
     """Спрашивает какие задачи выполнены и отправляет список задач."""
     tasks = await db.select_tasks(user_id, plan_date=date.today())

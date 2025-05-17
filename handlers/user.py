@@ -35,14 +35,16 @@ async def process_start_command(
     if not user:
         await db.insert_user(message.from_user)
     # Запускаем основной планировщик для пользователя
+
     scheduler.add_job(
         send_list_tasks,
         trigger='cron',
-        hour=9,
+        hour=13,
+        minute=20,
         start_date=datetime.now(),
         # end_date=date.today() + timedelta(days=1),
         id=f'main: user {message.from_user.id}, date {message.date}',
-        kwargs={'user_id': message.from_user.id, 'i18n': i18n}
+        kwargs={'user_id': message.from_user.id}
     )
     print(i18n.get('start'))
     await state.set_state(state=FSMTask.start)

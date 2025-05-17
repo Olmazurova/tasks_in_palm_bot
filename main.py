@@ -7,13 +7,9 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram_i18n import I18nContext, LazyProxy, I18nMiddleware
 from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore
-from aiogram_i18n.types import InlineKeyboardButton, InlineKeyboardMarkup
 from apscheduler.jobstores.redis import RedisJobStore
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler_di import ContextSchedulerDecorator
-from fluentogram import TranslatorHub, FluentTranslator
-from fluent_compiler.bundle import FluentBundle
 
 from config_data.config import Config, load_config
 from redis.asyncio import Redis
@@ -62,16 +58,6 @@ async def main():
     database = Database(config.db.database)
     database.connection()
 
-    # планировщик для отправки сообщений в определённое время
-    job_stores = {
-        'default': RedisJobStore()
-    }
-    scheduler = ContextSchedulerDecorator(AsyncIOScheduler(jobstores=job_stores))
-    scheduler.ctx.add_instance(bot, Bot)
-    scheduler.ctx.add_instance(database, Database)
-    scheduler.ctx.add_instance(scheduler, AsyncIOScheduler)
-    scheduler.start()
-
     # настройка перевода и локали
     # t_hub = TranslatorHub(
     #     {'ru': ('ru',)},
@@ -87,12 +73,27 @@ async def main():
     #     ],
     #     root_locale='ru',
     # )
-
+    i18n = FluentRuntimeCore(
+        path='locales/{locale}/LC_MESSAGES',
+        default_locale='ru',
+    )
     i18n_middleware = I18nMiddleware(
-        core=FluentRuntimeCore(path='locales/{locale}/LC_MESSAGES',),
+        core=i18n,
         default_locale='ru',
     )
     i18n_middleware.setup(dispatcher=dp)
+
+    # планировщик для отправки сообщений в определённое время
+    job_stores = {
+        'default': RedisJobStore()
+    }
+    scheduler = ContextSchedulerDecorator(
+        AsyncIOScheduler(jobstores=job_stores))
+    scheduler.ctx.add_instance(bot, Bot)
+    scheduler.ctx.add_instance(database, Database)
+    scheduler.ctx.add_instance(scheduler, AsyncIOScheduler)
+    scheduler.ctx.add_instance(i18n, FluentRuntimeCore)
+    scheduler.start()
 
     # Помещаем нужные объекты в workflow_data диспетчера
     dp.workflow_data.update(db=database, scheduler=scheduler)
