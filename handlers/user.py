@@ -6,13 +6,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram_i18n import I18nContext, LazyProxy
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fluentogram import TranslatorRunner
 
 from database.models import Database
 from keyboards.keyboard_utils import (main_kb_builder, finish_kb_builder,
                                       DoneCallbackFactory, DelCallbackFactory,
                                       TransferCallbackFactory)
-from lexicon.lexicon_ru import LEXICON_RU
 from services.services import parsing_task, send_list_tasks
 from states.states import FSMTask
 from utils.utils import (get_callback_answer_of_tasks,
@@ -39,14 +37,12 @@ async def process_start_command(
     scheduler.add_job(
         send_list_tasks,
         trigger='cron',
-        hour=13,
-        minute=20,
+        hour=9,
+        # minute=20,
         start_date=datetime.now(),
-        # end_date=date.today() + timedelta(days=1),
         id=f'main: user {message.from_user.id}, date {message.date}',
         kwargs={'user_id': message.from_user.id}
     )
-    print(i18n.get('start'))
     await state.set_state(state=FSMTask.start)
     await message.answer(
         text=i18n.get('start'), reply_markup=main_kb_builder.as_markup()
@@ -158,7 +154,7 @@ async def process_done_task(
     )
     await callback.answer(text=i18n.get('done'))
     await get_callback_answer_of_tasks(
-        callback, db, i18n, done=True, key='check-tasks', date=date.today()
+        callback, db, i18n, done=True, key='check-tasks', task_date=date.today()
     )
 
 
@@ -171,16 +167,15 @@ async def process_rescheduling_task(
 ):
     """Обработчик переноса даты планирования задачи."""
     task = await db.get_task(callback_data.user_id, callback_data.task_id)
-    print(task)
     await db.update_task(
         callback_data.user_id,
         callback_data.task_id,
         field='plan_date',
-        value=datetime.strptime(task[0][3], '%Y-%m-%d') + timedelta(days=1)
+        value=datetime.strptime(task[0][3], '%Y-%m-%d').date() + timedelta(days=1)
     )
     await callback.answer(text=i18n.get('rescheduling'))
     await get_callback_answer_of_tasks(
-        callback, db, i18n, done=True, key='check-tasks', date=date.today()
+        callback, db, i18n, done=True, key='check-tasks', task_date=date.today()
     )
 
 

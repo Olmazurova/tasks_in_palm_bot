@@ -1,16 +1,13 @@
 import logging
-import time
 from datetime import date, datetime, timedelta
+
 from aiogram import Router, Bot
 from aiogram.types import Message
-from aiogram_i18n import I18nContext, LazyProxy
-from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore, FluentBundle
+from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 
 from database.models import Database
 from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
-from lexicon.lexicon_ru import LEXICON_SCHEDULED_MESSAGES_RU, LEXICON_RU
 
 router = Router()
 
@@ -31,13 +28,14 @@ def parsing_task(message: Message):
 
 async def send_list_tasks(
         bot: Bot, 
-        user_id, 
+        user_id: int,
         db: Database, 
         scheduler: AsyncIOScheduler,
         i18n: FluentRuntimeCore,
 ):
     """Отправляет пользователю список задач каждый день в 9 утра."""
-    tasks = await db.select_tasks(user_id, plan_date=date.today())
+    job_date = date.today()
+    tasks = await db.select_tasks(user_id, plan_date=job_date)
     if not tasks:
         await bot.send_message(
             chat_id=user_id,
@@ -46,7 +44,6 @@ async def send_list_tasks(
         )
     else:
         tasks_keyboard = create_tasks_keyboard(tasks, done=True)
-        job_date = date.today()
         await bot.send_message(
             chat_id=user_id,
             text=i18n.get('check-tasks', date=job_date),
@@ -72,11 +69,10 @@ async def check_task_completion(
         i18n: FluentRuntimeCore,
 ):
     """Спрашивает какие задачи выполнены и отправляет список задач."""
-    tasks = await db.select_tasks(user_id, plan_date=date.today())
     job_date = date.today()
+    tasks = await db.select_tasks(user_id, plan_date=job_date)
 
     if not tasks or datetime.now().hour > 21:
-        print(f'{user_id} - {job_date}')
         scheduler.remove_job(id=f'{user_id} - {job_date}')
     else:
         tasks_keyboard = create_tasks_keyboard(tasks, done=True)

@@ -1,8 +1,5 @@
 from datetime import date, timedelta
 
-from aiogram_i18n import I18nContext, LazyProxy
-
-from lexicon.lexicon_ru import LEXICON_RU
 from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
 
 
@@ -12,10 +9,10 @@ async def get_callback_answer_of_tasks(
     i18n, 
     done=False, 
     key='tasks_list', 
-    date=date.today() + timedelta(days=1),
+    task_date=date.today() + timedelta(days=1),
 ):
     """Отправляет ответ на нажатие кнопки в зависимости от наличия задач."""
-    tasks = await db.select_tasks(callback.from_user.id)
+    tasks = await db.select_tasks(callback.from_user.id, plan_date=task_date)
     if not tasks:
         await callback.message.edit_text(
             text=i18n.get('no-tasks', case=1),
@@ -24,7 +21,7 @@ async def get_callback_answer_of_tasks(
     else:
         tasks_keyboard = create_tasks_keyboard(tasks, done=done)
         await callback.message.edit_text(
-            text=i18n.get(key, date=date),
+            text=i18n.get(key, date=task_date),
             reply_markup=tasks_keyboard,
         )
 
