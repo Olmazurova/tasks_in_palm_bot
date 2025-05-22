@@ -1,6 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore
 
 from lexicon.lexicon_ru import LEXICON_BUTTONS_RU
 
@@ -36,7 +37,12 @@ finish_kb_builder = InlineKeyboardBuilder().row(
 )
 
 
-def create_tasks_keyboard(tasks, done=False, state=False) -> InlineKeyboardMarkup:
+def create_tasks_keyboard(
+    tasks: list, 
+    i18n: FluentRuntimeCore, 
+    done: bool = False, 
+    state: bool = False
+) -> InlineKeyboardMarkup:
     """Создаёт клавиатуру из задач пользователя."""
     prefix = '✅' if done else '❌'
     callback_factory = DoneCallbackFactory if done else DelCallbackFactory
@@ -48,7 +54,7 @@ def create_tasks_keyboard(tasks, done=False, state=False) -> InlineKeyboardMarku
                 callback_data=callback_factory(user_id=task[1], task_id=task[0])
             )
             kb_builder.button(
-                text='↪',
+                text=i18n.get('btn_rescheduling'),
                 callback_data=TransferCallbackFactory(
                     user_id=task[1], task_id=task[0]
                 )

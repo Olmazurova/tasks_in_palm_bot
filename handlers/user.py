@@ -16,6 +16,9 @@ from states.states import FSMTask
 from utils.utils import (get_callback_answer_of_tasks,
                          get_message_answer_of_tasks)
 
+START_HOUR = 9
+START_MINUTE = 0
+
 router = Router()
 
 
@@ -37,8 +40,8 @@ async def process_start_command(
     scheduler.add_job(
         send_list_tasks,
         trigger='cron',
-        hour=9,
-        # minute=20,
+        hour=START_HOUR,
+        minute=START_MINUTE,
         start_date=datetime.now(),
         id=f'main: user {message.from_user.id}, date {message.date}',
         kwargs={'user_id': message.from_user.id}

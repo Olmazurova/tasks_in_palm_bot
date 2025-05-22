@@ -9,6 +9,9 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from database.models import Database
 from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
 
+HOURS_INTERVAL = 3
+HOUR_FINISH = 21
+
 router = Router()
 
 
@@ -43,7 +46,7 @@ async def send_list_tasks(
             reply_markup=main_kb_builder.as_markup(),
         )
     else:
-        tasks_keyboard = create_tasks_keyboard(tasks, done=True)
+        tasks_keyboard = create_tasks_keyboard(tasks, i18n, done=True)
         await bot.send_message(
             chat_id=user_id,
             text=i18n.get('check-tasks', date=job_date),
@@ -53,9 +56,9 @@ async def send_list_tasks(
         scheduler.add_job(
             check_task_completion,
             trigger='interval',
-            hours=3,
+            hours=HOURS_INTERVAL,
             start_date=datetime.now(),
-            end_date=date.today() + timedelta(hours=21),
+            end_date=date.today() + timedelta(hours=HOUR_FINISH),
             id=f'{user_id} - {job_date}',
             kwargs={'user_id': user_id},
         )
@@ -75,7 +78,7 @@ async def check_task_completion(
     if not tasks or datetime.now().hour > 21:
         scheduler.remove_job(id=f'{user_id} - {job_date}')
     else:
-        tasks_keyboard = create_tasks_keyboard(tasks, done=True)
+        tasks_keyboard = create_tasks_keyboard(tasks, i18n=i18n, done=True)
         await bot.send_message(
             chat_id=user_id,
             text=i18n.get('check-tasks', date=job_date),

@@ -19,7 +19,7 @@ async def get_callback_answer_of_tasks(
             reply_markup=main_kb_builder.as_markup(),
         )
     else:
-        tasks_keyboard = create_tasks_keyboard(tasks, done=done)
+        tasks_keyboard = create_tasks_keyboard(tasks, i18n, done=done)
         await callback.message.edit_text(
             text=i18n.get(key, date=task_date),
             reply_markup=tasks_keyboard,
@@ -35,7 +35,7 @@ async def get_message_answer_of_tasks(message, db, i18n):
             reply_markup=main_kb_builder.as_markup(),
         )
     else:
-        tasks_keyboard = create_tasks_keyboard(tasks, state=True)
+        tasks_keyboard = create_tasks_keyboard(tasks, i18n, state=True)
         await message.answer(
             text=i18n.get('tasks_list', date=date.today() + timedelta(days=1)),
             reply_markup=tasks_keyboard,
