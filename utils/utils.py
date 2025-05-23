@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
+from keyboards.keyboard_utils import create_tasks_keyboard, main_kb_builder
 
 
 async def get_callback_answer_of_tasks(

@@ -1,15 +1,13 @@
-from datetime import datetime, timedelta, date
 from pprint import pprint
 
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import Message
 from aiogram_i18n import I18nContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from lexicon.lexicon_ru import LEXICON_RU
-
 router = Router()
+
 
 @router.message(Command(commands='admin'))
 async def process_admin_command(

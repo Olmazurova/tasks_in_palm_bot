@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart, StateFilter
@@ -8,9 +8,9 @@ from aiogram_i18n import I18nContext, LazyProxy
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.models import Database
-from keyboards.keyboard_utils import (main_kb_builder, finish_kb_builder,
-                                      DoneCallbackFactory, DelCallbackFactory,
-                                      TransferCallbackFactory)
+from keyboards.keyboard_utils import (DelCallbackFactory, DoneCallbackFactory,
+                                      TransferCallbackFactory,
+                                      finish_kb_builder, main_kb_builder)
 from services.services import parsing_task, send_list_tasks
 from states.states import FSMTask
 from utils.utils import (get_callback_answer_of_tasks,

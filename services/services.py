@@ -1,13 +1,13 @@
 import logging
 from datetime import date, datetime, timedelta
 
-from aiogram import Router, Bot
+from aiogram import Bot, Router
 from aiogram.types import Message
 from aiogram_i18n.cores.fluent_runtime_core import FluentRuntimeCore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.models import Database
-from keyboards.keyboard_utils import main_kb_builder, create_tasks_keyboard
+from keyboards.keyboard_utils import create_tasks_keyboard, main_kb_builder
 
 HOURS_INTERVAL = 3
 HOUR_FINISH = 21

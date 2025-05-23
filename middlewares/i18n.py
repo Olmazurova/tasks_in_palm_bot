@@ -18,9 +18,10 @@ class TranslatorMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         user_lang = user.language_code
-        translator_runner: TranslatorRunner = data.get('t_hub').get_translator_by_locale(
-            user_lang, 
-            # separator='_',
+        translator_runner: TranslatorRunner = data.get(
+            't_hub'
+        ).get_translator_by_locale(
+            user_lang,
         )
         data['i18n'] = translator_runner
         return await handler(event, data)
