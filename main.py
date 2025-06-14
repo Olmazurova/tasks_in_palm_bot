@@ -36,7 +36,7 @@ async def main():
 
     config: Config = load_config()
 
-    redis = Redis(host='localhost')
+    redis = Redis(host='localhost', db=0)
 
     # Инициализируем объект хранилища
     storage = RedisStorage(redis=redis)
@@ -63,7 +63,7 @@ async def main():
 
     # планировщик для отправки сообщений в определённое время
     job_stores = {
-        'default': RedisJobStore()
+        'default': RedisJobStore(db=1)
     }
     scheduler = ContextSchedulerDecorator(
         AsyncIOScheduler(jobstores=job_stores))

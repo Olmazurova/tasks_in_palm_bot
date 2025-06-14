@@ -8,9 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.models import Database
 from keyboards.keyboard_utils import create_tasks_keyboard, main_kb_builder
-
-HOURS_INTERVAL = 3
-HOUR_FINISH = 21
+from utils.constants import HOUR_FINISH, HOURS_INTERVAL
 
 router = Router()
 

@@ -13,11 +13,9 @@ from keyboards.keyboard_utils import (DelCallbackFactory, DoneCallbackFactory,
                                       finish_kb_builder, main_kb_builder)
 from services.services import parsing_task, send_list_tasks
 from states.states import FSMTask
+from utils.constants import START_HOUR, START_MINUTE, TIMEDELTA_FOR_PLAN_DATE
 from utils.utils import (get_callback_answer_of_tasks,
                          get_message_answer_of_tasks)
-
-START_HOUR = 9
-START_MINUTE = 0
 
 router = Router()
 
@@ -200,7 +198,7 @@ async def process_add_task(message: Message, db: Database,  i18n: I18nContext):
     """Обработчик сообщения с задачами."""
     tasks = parsing_task(message)
     case = len(tasks)
-    plan_date = date.today() + timedelta(days=1)
+    plan_date = date.today() + timedelta(days=TIMEDELTA_FOR_PLAN_DATE)
 
     await db.insert_tasks(
         message.from_user.id,

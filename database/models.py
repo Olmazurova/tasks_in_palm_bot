@@ -3,6 +3,8 @@ import os
 import sqlite3
 from datetime import date, timedelta
 
+from utils.constants import TIMEDELTA_FOR_PLAN_DATE
+
 
 class Database:
     """ Класс работы с базой данных """
@@ -91,7 +93,9 @@ class Database:
         return True
 
     async def select_tasks(
-            self, user_id, plan_date=date.today() + timedelta(days=1)
+            self, 
+            user_id, 
+            plan_date=date.today() + timedelta(days=TIMEDELTA_FOR_PLAN_DATE)
     ):
         """Возвращает список задач пользователя на дату plan_date."""
 

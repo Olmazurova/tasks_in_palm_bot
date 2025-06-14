@@ -41,7 +41,8 @@ def create_tasks_keyboard(
     tasks: list, 
     i18n: FluentRuntimeCore, 
     done: bool = False, 
-    state: bool = False
+    state: bool = False,
+    locale: str = 'ru'
 ) -> InlineKeyboardMarkup:
     """Создаёт клавиатуру из задач пользователя."""
     prefix = '✅' if done else '❌'
@@ -54,7 +55,7 @@ def create_tasks_keyboard(
                 callback_data=callback_factory(user_id=task[1], task_id=task[0])
             )
             kb_builder.button(
-                text=i18n.get('btn_rescheduling'),
+                text=i18n.get('btn_rescheduling', locale=locale),
                 callback_data=TransferCallbackFactory(
                     user_id=task[1], task_id=task[0]
                 )
